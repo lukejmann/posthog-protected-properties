@@ -1,15 +1,17 @@
 {
     "name": "Protected Properties",
     "url": "https://github.com/lukejmann/posthog-app-protected-properties",
-    "description": "Require a secret key to be set in order to inject certain properties.",
+    "description": "Require a secret key to be set in order to injest certain properties.",
     "main": "index.ts",
     "posthogVersion": ">=1.25.0",
-    "config": [{
+    "config": [
+        {
             "key": "secret",
             "name": "Secret",
             "type": "string",
             "hint": "Secret key to require for protected properties",
-            "required": true
+            "required": true,
+            "secret": true
         },
         {
             "key": "protectedProperties",

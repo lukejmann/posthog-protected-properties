@@ -9,59 +9,79 @@ const { processEvent } = protectedPropertiesApp as Required<Plugin>
 const defaultMeta: protectedPropertiesApp.AppInterface = {
     config: {
         secret: 'secret',
-        protectedProperties: 'seon_blocked',
+        protectedProperties: 'is_admin,is_super',
     },
 }
 
-const createProtectedPageview = (): PluginEvent => {
+const createProtectedPageview = (hmac: string): PluginEvent => {
     const event = createPageview()
 
     const setProtectedProps = {
-        seon_blocked: true,
-        seon_blocked_hmac: 'invalid_hmac',
+        is_admin: true,
+        is_super: false,
+        hmac: hmac,
     }
 
     const properties = {
         // @ts-ignore
         ...event.properties,
         $set: setProtectedProps,
+        $set_once: setProtectedProps,
     }
     return {
         ...event,
         uuid: 'uuid',
         properties,
         $set: setProtectedProps,
+        $set_once: setProtectedProps,
     }
 }
 
-const verifyProtectedPropertyIsRemoved = (event: PluginEvent): void => {
+const verifyProtectedPropertiesAreRemoved = (event: PluginEvent): void => {
     // $set
-    expect(event!.$set!.seon_blocked).toEqual(undefined)
-    expect(event!.$set!.seon_blocked_hmac).not.toEqual(undefined)
+    expect(event!.$set!.is_admin).toEqual(undefined)
+    expect(event!.$set!.is_super).toEqual(undefined)
+    expect(event!.$set!.hmac).toEqual(undefined)
+
+    // $set_once
+    expect(event!.$set_once!.is_admin).toEqual(undefined)
+    expect(event!.$set_once!.is_super).toEqual(undefined)
+    expect(event!.$set_once!.hmac).toEqual(undefined)
 
     // $set on event props
-    expect(event!.properties!.$set!.seon_blocked).toEqual(undefined)
-    expect(event!.properties!.$set!.seon_blocked_hmac).not.toEqual(undefined)
+    expect(event!.properties!.$set!.is_admin).toEqual(undefined)
+    expect(event!.properties!.$set!.is_super).toEqual(undefined)
+    expect(event!.properties!.$set!.hmac).toEqual(undefined)
+
+    // $set_once on event props
+    expect(event!.properties!.$set_once!.is_admin).toEqual(undefined)
+    expect(event!.properties!.$set_once!.is_super).toEqual(undefined)
+    expect(event!.properties!.$set_once!.hmac).toEqual(undefined)
 }
 
-describe('Protected property', () => {
-    test('Protected property is removed when HMAC is invalid', async () => {
+describe('Protected properties', () => {
+    test('Protected properties are removed when HMAC is invalid', async () => {
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
-        const event = await processEvent(createProtectedPageview(), meta)
-        verifyProtectedPropertyIsRemoved(event!)
+        const event = await processEvent(createProtectedPageview('invalid_hmac'), meta)
+        verifyProtectedPropertiesAreRemoved(event!)
     })
 
-    test('Protected property is kept when HMAC is valid', async () => {
+    test('Protected properties are removed when HMAC is not provided', async () => {
+        const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
+        const event = await processEvent(createProtectedPageview(''), meta)
+        verifyProtectedPropertiesAreRemoved(event!)
+    })
+
+    test('Protected properties are kept when HMAC is valid', async () => {
         const validHMAC = generateHMAC(defaultMeta.config.secret, {
-            seon_blocked: true,
+            is_admin: true,
+            is_super: false,
         })
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
-        const preprocessedEvent = createProtectedPageview()
-        preprocessedEvent.$set!.seon_blocked_hmac = validHMAC
-        // @ts-ignore
-        preprocessedEvent.properties.$set!.seon_blocked_hmac = validHMAC
-        const event = await processEvent(preprocessedEvent, meta)
-        expect(event!.$set!.seon_blocked).toEqual(true)
-        expect(event!.properties!.$set!.seon_blocked).toEqual(true)
+        const event = await processEvent(createProtectedPageview(validHMAC), meta)
+        expect(event!.$set!.is_admin).toEqual(true)
+        expect(event!.$set!.is_super).toEqual(false)
+        expect(event!.$set_once!.is_admin).toEqual(true)
+        expect(event!.$set_once!.is_super).toEqual(false)
     })
 })

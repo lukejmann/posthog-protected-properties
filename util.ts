@@ -1,4 +1,3 @@
-import { Plugin } from '@posthog/plugin-scaffold'
 import * as crypto from 'crypto'
 const stringify = require('json-stringify-deterministic')
 

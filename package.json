@@ -43,6 +43,6 @@
         "*.{ts,tsx,js,jsx,json,yaml,toml,css,scss,html,xml}": "prettier --write"
     },
     "dependencies": {
-        "json-stringify-deterministic": "^1.0.8"
+        "json-stringify-deterministic": "^1.0.10"
     }
 }

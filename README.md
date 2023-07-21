@@ -4,9 +4,14 @@ The Protected Properties plugin for PostHog provides a way to verify the integri
 
 ## Features
 
--   Protects specific event properties using an HMAC.
-    -Verifies provided HMAC for each protected property, removing any properties where the HMAC is missing or invalid.
+-   Protects specific event properties using an HMAC, allowing only authorized services with the secret key to modify these properties.
 -   Ensures data integrity by preventing tampering with protected properties in transit.
+
+## Motivation
+
+Consider an application where certain features or content are only available to users who have a paid subscription. To manage access, you might use a property like has_paid_subscription in PostHog. However, since product analytics software like PostHog inherently allows users to send events, a user could send a crafted event to change their has_paid_subscription status and gain unauthorized access.
+
+This plugin requires a correct HMAC, which only a service knowing the secret key can generate, for updating any protected properties.
 
 ## Configuration
 
@@ -17,7 +22,32 @@ The Protected Properties plugin for PostHog provides a way to verify the integri
 
 To use it simply install the app from the repository URL: https://github.com/lukejmann/posthog-protected-properties or search for it in the PostHog App Library.
 
-When setting a protected property in your backend, provide an HMAC for the property. Include the HMAC in the $set properties with the key ${property}\_hmac.
+To set protected properties, you need to generate an HMAC for all the properties you want to protect. Include this HMAC in the $set or $set_once properties with the key hmac.
+
+The properties that should be protected are defined in the plugin configuration in the protectedProperties field. In the event processing, the plugin checks the provided HMAC against one generated from the protected properties.
+
+If the provided HMAC is missing or doesn't match the generated one, the plugin will remove the protected properties from the event.
+
+Here is an example of how you might set protected properties and their HMAC:
+
+```
+// Define the protected properties
+const protectedProperties: Record<string, any> = {
+    is_admin: true,
+    has_paid_subscription: false,
+};
+
+// Generate the HMAC for the protected properties
+const hmac = crypto.createHmac('sha256', secret).update(stringify(protectedProperties)).digest('hex');
+
+// Include the protected properties and their HMAC in the event properties
+const properties: Record<string, any> = {
+    $set: {
+        ...protectedProperties,
+        hmac: hmac,
+    },
+}
+```
 
 ## Development & testing
 
