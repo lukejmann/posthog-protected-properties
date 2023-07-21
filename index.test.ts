@@ -85,3 +85,60 @@ describe('Protected properties', () => {
         expect(event!.$set_once!.is_super).toEqual(false)
     })
 })
+
+const createPageviewWithNonProtectedProps = (hmac: string): PluginEvent => {
+    const event = createPageview()
+
+    const setProps = {
+        is_admin: true,
+        is_super: false,
+        non_protected_property: 'some value',
+        hmac: hmac,
+    }
+
+    const properties = {
+        // @ts-ignore
+        ...event.properties,
+        $set: setProps,
+        $set_once: setProps,
+    }
+    return {
+        ...event,
+        uuid: 'uuid',
+        properties,
+        $set: setProps,
+        $set_once: setProps,
+    }
+}
+
+const verifyNonProtectedPropertyIsKept = (event: PluginEvent): void => {
+    // $set
+    expect(event!.$set!.non_protected_property).toEqual('some value')
+
+    // $set_once
+    expect(event!.$set_once!.non_protected_property).toEqual('some value')
+
+    // $set on event props
+    expect(event!.properties!.$set!.non_protected_property).toEqual('some value')
+
+    // $set_once on event props
+    expect(event!.properties!.$set_once!.non_protected_property).toEqual('some value')
+}
+
+describe('Non-protected properties', () => {
+    test('Non-protected properties are not removed when no HMAC is provided', async () => {
+        const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
+        const event = await processEvent(createPageviewWithNonProtectedProps(''), meta)
+        verifyNonProtectedPropertyIsKept(event!)
+    })
+
+    test('Non-protected properties are not removed when valid HMAC is provided', async () => {
+        const validHMAC = generateHMAC(defaultMeta.config.secret, {
+            is_admin: true,
+            is_super: false,
+        })
+        const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
+        const event = await processEvent(createPageviewWithNonProtectedProps(validHMAC), meta)
+        verifyNonProtectedPropertyIsKept(event!)
+    })
+})
