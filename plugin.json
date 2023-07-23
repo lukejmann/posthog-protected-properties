@@ -1,7 +1,7 @@
 {
     "name": "Protected Properties",
     "url": "https://github.com/lukejmann/posthog-app-protected-properties",
-    "description": "Require a secret key to be set in order to injest certain properties.",
+    "description": "Require secret validation in order to ingest certain person properties.",
     "main": "index.ts",
     "posthogVersion": ">=1.25.0",
     "config": [
