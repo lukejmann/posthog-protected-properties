@@ -4,6 +4,7 @@ import { createPageview, resetMeta } from '@posthog/plugin-scaffold/test/utils'
 
 import * as protectedPropertiesApp from '.'
 import { generateHMAC } from './util'
+
 const { processEvent } = protectedPropertiesApp as Required<Plugin>
 
 const defaultMeta: protectedPropertiesApp.AppInterface = {
@@ -60,15 +61,34 @@ const verifyProtectedPropertiesAreRemoved = (event: PluginEvent): void => {
 
 describe('Protected properties', () => {
     test('Protected properties are removed when HMAC is invalid', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        jest.spyOn(console, 'warn').mockImplementation(() => {})
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
         const event = await processEvent(createProtectedPageview('invalid_hmac'), meta)
         verifyProtectedPropertiesAreRemoved(event!)
+        expect(console.warn).toHaveBeenCalledWith('Invalid HMAC for protected properties')
+    })
+
+    test('Protected properties are removed when HMAC is invalid (invalid secret)', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        jest.spyOn(console, 'warn').mockImplementation(() => {})
+        const invalidSecretHMAC = generateHMAC('differentSecret', {
+            is_admin: true,
+            is_super: false,
+        })
+        const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
+        const event = await processEvent(createProtectedPageview(invalidSecretHMAC), meta)
+        verifyProtectedPropertiesAreRemoved(event!)
+        expect(console.warn).toHaveBeenCalledWith('Invalid HMAC for protected properties')
     })
 
     test('Protected properties are removed when HMAC is not provided', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        jest.spyOn(console, 'warn').mockImplementation(() => {})
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
         const event = await processEvent(createProtectedPageview(''), meta)
         verifyProtectedPropertiesAreRemoved(event!)
+        expect(console.warn).toHaveBeenCalledWith('Missing HMAC for protected properties')
     })
 
     test('Protected properties are kept when HMAC is valid', async () => {

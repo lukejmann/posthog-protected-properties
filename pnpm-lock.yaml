@@ -11,8 +11,8 @@ dependencies:
 
 devDependencies:
   '@posthog/plugin-scaffold':
-    specifier: ^1.4.0
-    version: 1.4.0
+    specifier: ^1.4.2
+    version: 1.4.2
   '@types/jest':
     specifier: ^26.0.19
     version: 26.0.19
@@ -680,8 +680,8 @@ packages:
       fastq: 1.15.0
     dev: true
 
-  /@posthog/plugin-scaffold@1.4.0:
-    resolution: {integrity: sha512-vDSc0ElMeeZkCGRjfIqkzTYZxeL7dOc0osw4wbQ0gLt0N2Csy4H/gHtoj0qum/b90ge3cGcHyHYIwld804mrfg==}
+  /@posthog/plugin-scaffold@1.4.2:
+    resolution: {integrity: sha512-/VsRg3CfhQvYhxM2O9+gBOzj4K1QJZClY+yple0npL1Jd2nRn2nT4z7dlPSidTPZvdpFs0+hrnF+m4Kxf1NFvQ==}
     dependencies:
       '@maxmind/geoip2-node': 3.5.0
     dev: true
