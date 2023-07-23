@@ -15,9 +15,8 @@ const plugin: Plugin<AppInterface> = {
         const protectedPropertyValues: Record<string, unknown> = {}
 
         if (event.properties && protectedProperties) {
-            const providedHMAC = event.properties.$set?.hmac || event.properties.$set_once?.hmac
-            delete event.properties.$set?.hmac
-            delete event.properties.$set_once?.hmac
+            const providedHMAC = event.properties.protected_hmac
+            delete event.properties.protected_hmac
 
             if (event.properties.$set) {
                 for (const property of protectedProperties) {

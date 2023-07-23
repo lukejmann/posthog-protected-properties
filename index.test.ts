@@ -19,12 +19,12 @@ const createProtectedPageview = (hmac: string): PluginEvent => {
     const setProtectedProps = {
         is_admin: true,
         is_super: false,
-        hmac: hmac,
     }
 
     const properties = {
         // @ts-ignore
         ...event.properties,
+        protected_hmac: hmac,
         $set: setProtectedProps,
         $set_once: setProtectedProps,
     }
@@ -41,22 +41,21 @@ const verifyProtectedPropertiesAreRemoved = (event: PluginEvent): void => {
     // $set
     expect(event!.$set!.is_admin).toEqual(undefined)
     expect(event!.$set!.is_super).toEqual(undefined)
-    expect(event!.$set!.hmac).toEqual(undefined)
 
     // $set_once
     expect(event!.$set_once!.is_admin).toEqual(undefined)
     expect(event!.$set_once!.is_super).toEqual(undefined)
-    expect(event!.$set_once!.hmac).toEqual(undefined)
 
     // $set on event props
     expect(event!.properties!.$set!.is_admin).toEqual(undefined)
     expect(event!.properties!.$set!.is_super).toEqual(undefined)
-    expect(event!.properties!.$set!.hmac).toEqual(undefined)
 
     // $set_once on event props
     expect(event!.properties!.$set_once!.is_admin).toEqual(undefined)
     expect(event!.properties!.$set_once!.is_super).toEqual(undefined)
-    expect(event!.properties!.$set_once!.hmac).toEqual(undefined)
+
+    // Event properties
+    expect(event!.properties!.protected_hmac).toEqual(undefined)
 }
 
 describe('Protected properties', () => {
