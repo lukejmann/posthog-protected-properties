@@ -66,7 +66,9 @@ describe('Protected properties', () => {
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
         const event = await processEvent(createProtectedPageview('invalid_hmac'), meta)
         verifyProtectedPropertiesAreRemoved(event!)
-        expect(console.warn).toHaveBeenCalledWith('Invalid HMAC for protected properties')
+        expect(console.warn).toHaveBeenCalledWith(
+            'Dropping protected properties (invalid HMAC provided): is_admin, is_super'
+        )
     })
 
     test('Protected properties are removed when HMAC is invalid (invalid secret)', async () => {
@@ -79,7 +81,31 @@ describe('Protected properties', () => {
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
         const event = await processEvent(createProtectedPageview(invalidSecretHMAC), meta)
         verifyProtectedPropertiesAreRemoved(event!)
-        expect(console.warn).toHaveBeenCalledWith('Invalid HMAC for protected properties')
+        expect(console.warn).toHaveBeenCalledWith(
+            'Dropping protected properties (invalid HMAC provided): is_admin, is_super'
+        )
+    })
+
+    test('Protected properties are removed when HMAC is invalid (partial props)', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        jest.spyOn(console, 'warn').mockImplementation(() => {})
+        const invalidSecretHMAC = generateHMAC('differentSecret', {
+            is_admin: true,
+            is_super: false,
+        })
+        const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
+        const eventPayload = createProtectedPageview(invalidSecretHMAC)
+        const event = await processEvent(
+            {
+                ...eventPayload,
+                $set: { is_admin: true },
+                $set_once: { is_admin: true },
+                properties: { ...eventPayload.properties, $set: { is_admin: true }, $set_once: { is_admin: true } },
+            },
+            meta
+        )
+        verifyProtectedPropertiesAreRemoved(event!)
+        expect(console.warn).toHaveBeenCalledWith('Dropping protected properties (invalid HMAC provided): is_admin')
     })
 
     test('Protected properties are removed when HMAC is not provided', async () => {
@@ -88,7 +114,7 @@ describe('Protected properties', () => {
         const meta = resetMeta(defaultMeta) as PluginMeta<Plugin>
         const event = await processEvent(createProtectedPageview(''), meta)
         verifyProtectedPropertiesAreRemoved(event!)
-        expect(console.warn).toHaveBeenCalledWith('Missing HMAC for protected properties')
+        expect(console.warn).toHaveBeenCalledWith('Dropping protected properties (no HMAC provided).')
     })
 
     test('Protected properties are kept when HMAC is valid', async () => {
